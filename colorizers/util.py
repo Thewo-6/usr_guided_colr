@@ -25,7 +25,8 @@ def preprocess_img(img_rgb_orig, HW=(256,256), resample=3):
 	img_l_orig = img_lab_orig[:,:,0]
 	img_l_rs = img_lab_rs[:,:,0]
 
-	tens_orig_l = torch.Tensor(img_l_orig)[None,None,:,:]
+	tens_orig_l = torch.Tensor(img_l_orig)[None,None,:,:] 
+	# The expected input for CNNs in pytorch is (N,C,H,W)
 	tens_rs_l = torch.Tensor(img_l_rs)[None,None,:,:]
 
 	return (tens_orig_l, tens_rs_l)

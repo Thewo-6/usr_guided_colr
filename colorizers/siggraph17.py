@@ -69,7 +69,7 @@ class SIGGRAPHGenerator(BaseColor):
         model7+=[nn.ReLU(True),]
         model7+=[norm_layer(512),]
 
-        # Conv7
+        # Conv8
         model8up=[nn.ConvTranspose2d(512, 256, kernel_size=4, stride=2, padding=1, bias=True)]
         model3short8=[nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),]
 
