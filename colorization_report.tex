@@ -1,0 +1,176 @@
+\documentclass[10pt,conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\linespread{1.2}
+
+\title{Interactive B/W Image Colorization Using User-Guided Scribbles Based on Zhang et al. (2017)}
+
+\author{
+  \IEEEauthorblockN{Hantz Brunet Guerrier, Max Ally W. Theresias}
+  \IEEEauthorblockA{IBPI\\
+  Yuan Ze University\\
+  s1113534, s1113535}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This project builds upon the work of Zhang et al. (2017) by enhancing their automatic black-and-white image colorization model with an interactive interface for user-guided scribbles. Their model, which we treat as a black-box inference tool, predicts color distributions over ab channels given only grayscale input. While effective, the model often fails in scenarios where multiple plausible colorizations exist. By introducing user-provided color hints, our system improves control and fidelity in the final results. We describe the motivation, system design, dataset, implementation, and evaluation of our interactive extension.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Image Colorization, Deep Learning, User Interaction, CNN, Color Hints, Image Restoration
+\end{IEEEkeywords}
+
+\section{Introduction}
+Image colorization has wide applications in historical restoration, media enhancement, and AI-generated content creation. Traditional methods required manual labor and artistic expertise. Deep learning automates the process but often lacks context awareness and user control.
+
+Automatic models struggle with ambiguity. For example, skies may appear gray or washed out if the model is unsure about lighting or context. We introduce a user-guided interface built on top of the pretrained model from Zhang et al. (2017), selected due to its state-of-the-art performance and public availability. Our work focuses exclusively on enhancing usability and controllability via user interaction.
+
+\section{Related Work}
+Zhang et al. (2016) pioneered deep learning colorization by predicting ab channels in LAB space. Their later work (2017) introduced learned priors to improve realism. Levin et al. (2004) developed optimization-based methods for scribble propagation. More recent works integrate user hints as spatial priors, often through input masking or concatenation.
+
+\section{System Overview}
+Our system combines three main components:
+\begin{enumerate}
+  \item A pretrained grayscale-to-color CNN (Zhang et al. 2017)
+  \item A user interface for hint collection (scribbles)
+  \item A module that encodes hints and feeds them into the model during inference
+\end{enumerate}
+
+\section{Model Architecture}
+\subsection{Network Layers}
+We use the original model architecture proposed by Zhang et al. (2017), which includes 7 convolutional blocks for feature extraction and 3 decoding blocks for color prediction. It uses dilated convolutions to increase receptive field size without sacrificing resolution.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{modelArchitecture.png}
+\caption{Network architecture from Zhang et al. L-channel input is mapped through 8 convolutional stages and outputs a distribution over 313 ab bins.}
+\end{figure}
+
+\subsection{Hint Injection Strategy}
+Hints are provided as two tensors: an ab map and a binary mask. These are concatenated with the L channel to form a four-channel input to the network.
+
+\subsection{Annealed Mean Prediction}
+To resolve ambiguity between multiple plausible colors, the model uses temperature scaling on the predicted softmax distribution over ab bins. The final prediction is computed as the annealed mean with temperature T = 0.38.
+
+\section{Color Space Quantization}
+The model quantizes the ab color space into 313 discrete bins within the in-gamut region of LAB space. This transforms color prediction into a classification task, which benefits from cross-entropy optimization and frequency balancing.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\linewidth]{log(P (a,b)).png}
+\caption{Empirical probability distribution of ab values in natural images. Grays and dull colors dominate.}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\linewidth]{log(P(a,b|L)).png}
+\caption{Conditional ab distributions across different L (lightness) levels.}
+\end{figure}
+
+\section{User Interface}
+We implemented an OpenCV-based tool where users can select RGB colors and draw hints directly on grayscale images.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{ui_screenshot1.png}
+\caption{Scribble interface with color picker for hint selection.}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{ui_screenshot2.png}
+\caption{User places red hints on the apple before inference.}
+\end{figure}
+
+\section{Experimental Setup}
+We used a subset of ImageNet, resized to 256x256 pixels. Hint maps were generated by randomly sampling ground truth ab values for 10\%, 25\%, and 50\% of pixels. Evaluation metrics include SSIM, PSNR, and FID.
+
+\section{Quantitative Evaluation}
+\begin{table}[h]
+\centering
+\caption{Performance vs. Hint Density (Higher = Better)}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Hint Density & SSIM & PSNR & FID \\
+\hline
+0\% (Auto) & 0.82 & 23.1 & 61.3 \\
+10\% & 0.86 & 24.7 & 51.6 \\
+25\% & 0.88 & 26.3 & 43.8 \\
+50\% & 0.90 & 27.5 & 37.2 \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{User Study}
+We conducted a small user study inspired by Zhang et al.’s AMT tests. Participants were asked to identify whether images were colorized by a human or our system. Average confusion rate reached 30\%, suggesting competitive realism.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{confusionRates.png}
+\caption{Confusion matrix comparing recolored outputs vs ground truth. Red points show high-error pairs.}
+\end{figure}
+
+\section{Results and Evaluation}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{comparison_grid.png}
+\caption{Top: grayscale input. Middle: automatic output. Bottom: user-guided colorization.}
+\end{figure}
+
+\section{Case Studies}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{AutoColorization.png}
+\caption{Without user hints, the apple appears desaturated and lacks realism.}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{UserGuidedColorization.png}
+\caption{With user hints, the apple appears vibrant and matches expected color.}
+\end{figure}
+
+\subsection{Legacy Photo Restoration}
+We tested our system on vintage B/W photographs. Despite domain gaps, our user-guided approach enabled convincing and controllable recolorization.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.48\linewidth]{legacy1.png}
+\includegraphics[width=0.48\linewidth]{legacy.png}
+\caption{Historical image restoration: grayscale (top), colorized (bottom).}
+\end{figure}
+
+\section{Failure Cases}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{coloredVsGroundTruth.png}
+\caption{Schnauzers appear unnaturally warm without proper semantic hints.}
+\end{figure}
+
+\section{Discussion and Limitations}
+Our approach gives users control but depends on prior color knowledge. Limitations include lack of automatic hint suggestion, no undo functionality, and potential for conflicting hints. We also did not modify or fine-tune the pretrained model.
+
+\section{Conclusion and Future Work}
+We introduced an interactive system for improving colorization through user scribbles, based on the state-of-the-art Zhang et al. (2017) model. While we do not train or alter the model, our additions improve flexibility and realism. Future work includes:
+\begin{itemize}
+  \item Web interface and touchscreen drawing
+  \item Automatic region-based hint generation
+  \item Semantic-aware hint propagation
+\end{itemize}
+
+\section*{Acknowledgments}
+We thank our instructor for guidance and Zhang et al. for releasing their pretrained models.
+
+\begin{thebibliography}{1}
+\bibitem{zhang2016colorful} R. Zhang, P. Isola, and A. A. Efros, "Colorful image colorization," in ECCV, 2016.
+\bibitem{zhang2017real} R. Zhang et al., "Real-Time User-Guided Image Colorization with Learned Deep Priors," in SIGGRAPH, 2017.
+\bibitem{levin2004colorization} A. Levin et al., "Colorization using optimization," ACM Transactions on Graphics, 2004.
+\end{thebibliography}
+
+\end{document}

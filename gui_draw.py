@@ -30,7 +30,7 @@ def open_color_picker_qt():
 
 # ---------- Argument Parser ----------
 parser = argparse.ArgumentParser()
-parser.add_argument('--img_path', type=str, default='test_img/gray_apple.png', help='Path to grayscale image')
+parser.add_argument('-i','--img_path', type=str, default='test_img/gray_apple.png', help='Path to grayscale image')
 args = parser.parse_args()
 
 # ---------- Load Image ----------
